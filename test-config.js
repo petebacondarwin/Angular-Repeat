@@ -4,7 +4,9 @@ files = [
   JASMINE_ADAPTER,
   'test/lib/angular/angular.js',
   'test/lib/angular/angular-mocks.js',
-  'src/**/*.js',
+  'src/module.js',
+  'src/what-changed.js',
+  'src//my-repeat.js',
   'test/unit/**/*.spec.js'
 ];
 

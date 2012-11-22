@@ -1,4 +1,4 @@
-angular.module('repeat', []).factory('whatChanged', function() {
+angular.module('repeat').factory('whatChanged', function() {
   var uid = ['0', '0', '0'];
 
   return function(original, changed) {
