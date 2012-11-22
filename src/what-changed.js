@@ -1,4 +1,6 @@
-angular.module('repeat').factory('whatChanged', function() {
+angular.module('repeat')
+
+.factory('whatChanged', function() {
   var uid = ['0', '0', '0'];
 
   return function(original, changed) {
@@ -86,6 +88,9 @@ angular.module('repeat').factory('whatChanged', function() {
     }
 
     for(var key in objHash) {
+      if ( !objHash.hasOwnProperty(key) ) {
+        continue;
+      }
       var entry = objHash[key];
       index = 0;
       while(index < entry.oldIndexes.length && index < entry.newIndexes.length) {
@@ -163,5 +168,43 @@ angular.module('repeat').factory('whatChanged', function() {
     }
 
     return objType + ':' + key;
-  }  
+  }
+})
+
+.factory('flattenChanges', function() {
+  var index, item;
+  function get(list, index) {
+    list[index] = angular.isDefined(list[index]) ? list[index] : {};
+    return list[index];
+  }
+  return function(changes) {
+    var flattened = [];
+    // Flatten all the changes into a straight array
+    for(index = 0; index < changes.modifications.length; index++) {
+      item = get(flattened, changes.modifications[index].index);
+      item.modified = true;
+      item.oldValue = changes.modifications[index].oldValue;
+      item.newValue = changes.modifications[index].newValue;
+      item.index = changes.modifications[index].index;
+    }
+    for(index = 0; index < changes.deletions.length; index++) {
+      item = get(flattened, changes.deletions[index].index);
+      item.deleted= true;
+      item.index = changes.deletions[index].index;
+    }
+    for(index = 0; index < changes.additions.length; index++) {
+      item = get(flattened,changes.additions[index].index);
+      item.added = true;
+      item.value = changes.additions[index].newValue;
+      item.index = changes.additions[index].index;
+    }
+    for(index = 0; index < changes.moves.length; index++) {
+      item = get(flattened,changes.moves[index].oldIndex);
+      item.moved = true;
+      item.index = changes.moves[index].newIndex;
+      item.oldIndex = changes.moves[index].oldIndex;
+      item.value = changes.moves[index].value;
+    }
+    return flattened;
+  };
 });

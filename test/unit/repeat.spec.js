@@ -1,9 +1,14 @@
 describe('repeat', function() {
+  angular.module('test', []).config(function($rootScopeProvider) {
+    $rootScopeProvider.digestTtl(2);
+  });
+  beforeEach(module('test'));
+  beforeEach(module('repeat'));
+
   describe('whatChanged', function() {
     var whatChanged;
 
     beforeEach(function () {
-      module('repeat');
       inject(function(_whatChanged_) {
         whatChanged = _whatChanged_;
       });
@@ -93,7 +98,7 @@ describe('repeat', function() {
       var original;
       beforeEach(function() {
         obj1 = {};
-        obj2 = {};
+        obj2 = ['a','b'];
         obj3 = {};
         original = [obj1, obj2, obj3];
       });
@@ -193,16 +198,100 @@ describe('repeat', function() {
     });
   });
 
-  xdescribe('my-repeater directive', function() {
+  describe('flatten', function() {
+    var flattenChanges;
+
+    beforeEach(function () {
+      inject(function(_flattenChanges_) {
+        flattenChanges = _flattenChanges_;
+      });
+    });
+
+    it('should flatten changes into a single indexed array', function() {
+      var flattened;
+      var changes = {
+        additions: [],
+        deletions: [],
+        modifications: [],
+        moves: []
+      };
+
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(0);
+
+      changes.additions.push({ index: 2, newValue: 'someVal'});
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(3);
+      expect(flattened[0]).toBeUndefined();
+      expect(flattened[1]).toBeUndefined();
+      expect(flattened[2].added).toBe(true);
+      expect(flattened[2].value).toBe('someVal');
+
+      changes.deletions.push({ index: 2, oldValue: {}});
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(3);
+      expect(flattened[0]).toBeUndefined();
+      expect(flattened[1]).toBeUndefined();
+      expect(flattened[2].added).toBe(true);
+      expect(flattened[2].value).toBe('someVal');
+      expect(flattened[2].deleted).toBe(true);
+
+      changes.modifications.push({ index: 4, oldValue: 'something', newValue: 23 });
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(5);
+      expect(flattened[0]).toBeUndefined();
+      expect(flattened[1]).toBeUndefined();
+      expect(flattened[2].added).toBe(true);
+      expect(flattened[2].value).toBe('someVal');
+      expect(flattened[2].deleted).toBe(true);
+      expect(flattened[4].modified).toBe(true);
+      expect(flattened[4].oldValue).toBe('something');
+      expect(flattened[4].newValue).toBe(23);
+
+      changes.moves.push({ oldIndex: 3, newIndex: 1, value: {} });
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(5);
+      expect(flattened[0]).toBeUndefined();
+      expect(flattened[1]).toBeUndefined();
+      expect(flattened[2].added).toBe(true);
+      expect(flattened[2].value).toBe('someVal');
+      expect(flattened[2].deleted).toBe(true);
+      expect(flattened[3].moved).toBe(true);
+      expect(flattened[3].value).toEqual({});
+      expect(flattened[3].oldIndex).toBe(3);
+      expect(flattened[3].index).toBe(1);
+      expect(flattened[4].modified).toBe(true);
+      expect(flattened[4].oldValue).toBe('something');
+      expect(flattened[4].newValue).toBe(23);
+    });
+
+    it('should not be affected by previous calls', function() {
+      var flattened;
+      var changes = {
+        additions: [],
+        deletions: [],
+        modifications: [],
+        moves: []
+      };
+
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(0);
+
+      changes.additions.push({ index: 2, newValue: 'someVal'});
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(3);
+
+      changes.additions = [];
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(0);
+    });
+  });
+
+  describe('my-repeater directive', function() {
     var element;
 
 
-    afterEach(function(){
-      dealoc(element);
-    });
-
-
-    it('should ngRepeat over array', inject(function($rootScope, $compile) {
+    it('should myRepeat over array', inject(function($rootScope, $compile) {
       element = $compile(
         '<ul>' +
           '<li my-repeat="item in items" ng-init="suffix = \';\'" ng-bind="item + suffix"></li>' +
@@ -230,7 +319,7 @@ describe('repeat', function() {
     }));
 
 
-    it('should ngRepeat over array of primitive correctly', inject(function($rootScope, $compile) {
+    it('should myRepeat over array of primitive correctly', inject(function($rootScope, $compile) {
       element = $compile(
         '<ul>' +
           '<li my-repeat="item in items" ng-init="suffix = \';\'" ng-bind="item + suffix"></li>' +
@@ -313,78 +402,10 @@ describe('repeat', function() {
     }));
 
 
-    it('should ngRepeat over object', inject(function($rootScope, $compile) {
-      element = $compile(
-        '<ul>' +
-          '<li my-repeat="(key, value) in items" ng-bind="key + \':\' + value + \';\' "></li>' +
-        '</ul>')($rootScope);
-      $rootScope.items = {misko:'swe', shyam:'set'};
-      $rootScope.$digest();
-      expect(element.text()).toEqual('misko:swe;shyam:set;');
-    }));
-
-    
-    it('should ngRepeat over object with primitive value correctly', inject(function($rootScope, $compile) {
-      element = $compile(
-        '<ul>' +
-          '<li my-repeat="(key, value) in items" ng-bind="key + \':\' + value + \';\' "></li>' +
-        '</ul>')($rootScope);
-      $rootScope.items = {misko:'true', shyam:'true', zhenbo: 'true'};
-      $rootScope.$digest();
-      expect(element.find('li').length).toEqual(3);
-      expect(element.text()).toEqual('misko:true;shyam:true;zhenbo:true;');
-    
-      $rootScope.items = {misko:'false', shyam:'true', zhenbo: 'true'};
-      $rootScope.$digest();
-      expect(element.find('li').length).toEqual(3);
-      expect(element.text()).toEqual('misko:false;shyam:true;zhenbo:true;');
-    
-      $rootScope.items = {misko:'false', shyam:'false', zhenbo: 'false'};
-      $rootScope.$digest();
-      expect(element.find('li').length).toEqual(3);
-      expect(element.text()).toEqual('misko:false;shyam:false;zhenbo:false;');
-    
-      $rootScope.items = {misko:'true'};
-      $rootScope.$digest();
-      expect(element.find('li').length).toEqual(1);
-      expect(element.text()).toEqual('misko:true;');
-
-      $rootScope.items = {shyam:'true', zhenbo: 'false'};
-      $rootScope.$digest();
-      expect(element.find('li').length).toEqual(2);
-      expect(element.text()).toEqual('shyam:true;zhenbo:false;');
-    }));
-
-
-    it('should not ngRepeat over parent properties', inject(function($rootScope, $compile) {
-      var Class = function() {};
-      Class.prototype.abc = function() {};
-      Class.prototype.value = 'abc';
-
-      element = $compile(
-        '<ul>' +
-          '<li my-repeat="(key, value) in items" ng-bind="key + \':\' + value + \';\' "></li>' +
-        '</ul>')($rootScope);
-      $rootScope.items = new Class();
-      $rootScope.items.name = 'value';
-      $rootScope.$digest();
-      expect(element.text()).toEqual('name:value;');
-    }));
-
-
-    it('should error on wrong parsing of ngRepeat', inject(function($rootScope, $compile) {
+    it('should error on wrong parsing of myRepeat', inject(function($rootScope, $compile) {
       expect(function() {
         element = $compile('<ul><li my-repeat="i dont parse"></li></ul>')($rootScope);
-      }).toThrow("Expected ngRepeat in form of '_item_ in _collection_' but got 'i dont parse'.");
-    }));
-
-
-    it("should throw error when left-hand-side of ngRepeat can't be parsed", inject(
-        function($rootScope, $compile) {
-      expect(function() {
-        element = $compile('<ul><li my-repeat="i dont parse in foo"></li></ul>')($rootScope);
-      }).toThrow("'item' in 'item in collection' should be identifier or (key, value) but got " +
-                 "'i dont parse'.");
+      }).toThrow("Expected myRepeat in form of '_item_ in _collection_' but got 'i dont parse'.");
     }));
 
 
@@ -397,18 +418,6 @@ describe('repeat', function() {
       $rootScope.items = ['misko', 'shyam', 'frodo'];
       $rootScope.$digest();
       expect(element.text()).toEqual('misko0|shyam1|frodo2|');
-    }));
-
-
-    it('should expose iterator offset as $index when iterating over objects',
-        inject(function($rootScope, $compile) {
-      element = $compile(
-        '<ul>' +
-          '<li my-repeat="(key, val) in items" ng-bind="key + \':\' + val + $index + \'|\'"></li>' +
-        '</ul>')($rootScope);
-      $rootScope.items = {'misko':'m', 'shyam':'s', 'frodo':'f'};
-      $rootScope.$digest();
-      expect(element.text()).toEqual('frodo:f0|misko:m1|shyam:s2|');
     }));
 
 
@@ -439,31 +448,6 @@ describe('repeat', function() {
       $rootScope.items.pop();
       $rootScope.$digest();
       expect(element.text()).toEqual('misko:true-false-true|');
-    }));
-
-
-    it('should expose iterator position as $first, $middle and $last when iterating over objects',
-        inject(function($rootScope, $compile) {
-      element = $compile(
-        '<ul>' +
-          '<li my-repeat="(key, val) in items">{{key}}:{{val}}:{{$first}}-{{$middle}}-{{$last}}|</li>' +
-        '</ul>')($rootScope);
-      $rootScope.items = {'misko':'m', 'shyam':'s', 'doug':'d', 'frodo':'f'};
-      $rootScope.$digest();
-      expect(element.text()).
-          toEqual('doug:d:true-false-false|' +
-                  'frodo:f:false-true-false|' +
-                  'misko:m:false-true-false|' +
-                  'shyam:s:false-false-true|');
-
-      delete $rootScope.items.doug;
-      delete $rootScope.items.frodo;
-      $rootScope.$digest();
-      expect(element.text()).toEqual('misko:m:true-false-false|shyam:s:false-false-true|');
-
-      delete $rootScope.items.shyam;
-      $rootScope.$digest();
-      expect(element.text()).toEqual('misko:m:true-false-true|');
     }));
 
 
