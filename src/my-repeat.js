@@ -5,7 +5,7 @@ angular.module('repeat')
     transclude: 'element',
     priority: 1000,
     terminal: true,
-    compile: function(element, attr, linker) {
+    compile: function(element, attr, clone) {
       var expression = attr.myRepeat;
       var match = expression.match(/^\s*(.+)\s+in\s+(.*)\s*$/);
       if (!match) {
@@ -15,64 +15,95 @@ angular.module('repeat')
       var sourceExpression = match[2];
 
       // Return the linking function for this directive
-      return function(scope, templateElement, attr){
+      return function(scope, startElement, attr){
         var originalCollection = [];
         var originalChildItems = [];
-        var containerElement = templateElement.parent();
+        var containerElement = startElement.parent();
+
 
         scope.$watch(function myRepeatWatch(scope){
-          var index, item;
+          var item;
           var newCollection = scope.$eval(sourceExpression);
 
           // Make a copy of the child items that will be updated
           var newChildItems = [];
-          for(index=0; index<originalChildItems.length; index++) {
-            newChildItems[index] = originalChildItems[index];
-          }
 
           var temp = whatChanged(originalCollection, newCollection);
           var changes = flattenChanges(temp);
 
 
-          // Iterate of the flattened changes array - updating the childscopes accordingly
-          var lastChildScope, newChildScope;
-          for(index = 0; index < changes.length; index++) {
-            item = changes[index];
-            if ( angular.isDefined(item)) {
-              if ( item.added ) {
-                var newChildItem = newChildItems[index] = { scope: scope.$new() };
-                newChildScope = newChildItem.scope;
-                newChildScope[valueIdentity] = item.value;
-
-                linker(newChildItem.scope, function(newChildElement){
-                  if ( index > 0 ) {
-                    angular.element(containerElement.children()[index-1]).after(newChildElement);
-                  } else {
-                    containerElement.prepend(newChildElement);
-                  }
-                  newChildItem.element = newChildElement;
-                });
-              } else if ( item.deleted ) {
-                var originalChildItem = originalChildItems[index];
-                originalChildItem.scope.$destroy();
-                originalChildItem.element.remove();
-                newChildItems[item.index] = undefined;
-              } else if ( item.modified ) {
-                newChildItems[index].scope[valueIdentity] = item.newValue;
-              } else if ( item.moved ) {
-                newChildItems[item.index] = originalChildItems[item.oldIndex];
+          // Iterate of the flattened changes array - updating the childscopes and elements accordingly
+          var lastChildScope, newChildScope, lastIndex, newChildItem;
+          var currentElement = startElement;
+          var itemIndex = 0, changeIndex = 0;
+          while(changeIndex < changes.length) {
+            item = changes[changeIndex];
+            if ( !angular.isDefined(item) ) {
+              // No change for this item just copy it over
+              newChildItem = originalChildItems[itemIndex];
+              newChildItems.push(newChildItem);
+              currentElement = newChildItem.element;
+              itemIndex++;
+              changeIndex++;
+              continue;
+            }
+            if ( item.deleted ) {
+              // This item was deleted - destroy the scope and remove the element
+              var originalChildItem = originalChildItems[itemIndex];
+              originalChildItem.scope.$destroy();
+              originalChildItem.element.remove();
+              if ( !item.added ) {
+                // If an item had been added as well the the index will be moved forward there
+                itemIndex++;
               }
             }
+            if ( item.added ) {
+              // This item has been added - create a new scope and clone a new element
+              newChildItem = { scope: scope.$new() };
+              newChildItem.scope[valueIdentity] = item.value;
+              clone(newChildItem.scope, function(newChildElement){
+                currentElement.after(newChildElement);
+                currentElement = newChildItem.element = newChildElement;
+              });
+              newChildItems.push(newChildItem);
+              itemIndex++;
+            }
+            if ( item.modified ) {
+              // This item is a primitive that has been modified - update the scope
+              newChildItem = originalChildItems[itemIndex];
+              newChildItem.scope[valueIdentity] = item.newValue;
+              newChildItems.push(newChildItem);
+              itemIndex++;
+              currentElement = newChildItem.element;
+            }
+            if ( item.moved ) {
+              // This item is an object that has moved from somewhere else - move the element
+              newChildItem = originalChildItems[item.oldIndex];
+              newChildItems.push(newChildItem);
+              itemIndex++;
+              currentElement.after(newChildItem.element);
+              currentElement = newChildItem.element;
+            }
+            changeIndex++;
           }
-          for(index=0; index<newChildItems.length; index++) {
+          while( itemIndex < originalChildItems.length ) {
+            // No change for this item just copy it over
+            newChildItem = originalChildItems[itemIndex];
+            newChildItems.push(newChildItem);
+            currentElement = newChildItem.element;
+            itemIndex++;
+          }
+
+          // Update $index, $first, $middle & $last
+          for(var index=0; index<newChildItems.length; index++) {
             if (angular.isDefined(newChildItems[index]) ) {
-              // Update $index, $first, $middle & $last
               newChildScope = newChildItems[index].scope;
               newChildScope.$index = index;
               newChildScope.$first = (index === 0);
               newChildScope.$middle = (index !== 0);
               newChildScope.$last = false;
               lastChildScope = newChildScope;
+              lastIndex = index;
             }
           }
           // Fix up last item
@@ -82,8 +113,8 @@ angular.module('repeat')
           }
 
           // Store originals for next time
-          originalCollection = newCollection;
-          originalChildItems = newChildItems;
+          originalCollection = newCollection.slice(0);
+          originalChildItems = newChildItems.slice(0);
         });
 
       };
