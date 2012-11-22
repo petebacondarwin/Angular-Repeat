@@ -17,7 +17,7 @@ describe('repeat', function() {
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to identify indexes of primitives that have changed', function() {
@@ -26,7 +26,7 @@ describe('repeat', function() {
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([
+        expect(changes.modifications).toEqual([
           { index: 2, oldValue: 2, newValue: 3 },
           { index: 3, oldValue: 3, newValue: 4 },
           { index: 4, oldValue: 4, newValue: 2 }
@@ -42,7 +42,7 @@ describe('repeat', function() {
         ]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to identify removed primitives', function() {
@@ -54,7 +54,7 @@ describe('repeat', function() {
           { index: 4, oldValue: 4 }
         ]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to identify modifications and additions', function () {
@@ -66,7 +66,7 @@ describe('repeat', function() {
         ]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([
+        expect(changes.modifications).toEqual([
           { index: 1, oldValue: 1, newValue: 7 },
           { index: 2, oldValue: 2, newValue: 8 }
         ]);
@@ -81,7 +81,7 @@ describe('repeat', function() {
           { index: 4, oldValue: 4 }
         ]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([
+        expect(changes.modifications).toEqual([
           { index: 1, oldValue: 1, newValue: 7 },
           { index: 2, oldValue: 2, newValue: 8 }
         ]);
@@ -104,7 +104,7 @@ describe('repeat', function() {
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to identify if an object moves', function() {
@@ -116,7 +116,7 @@ describe('repeat', function() {
           { value: obj2, oldIndex: 1, newIndex: 2 },
           { value: obj3, oldIndex: 2, newIndex: 1 }
         ]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to identify if a new object is added', function() {
@@ -128,7 +128,7 @@ describe('repeat', function() {
         ]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to identify if an object is deleted from the end', function() {
@@ -139,7 +139,7 @@ describe('repeat', function() {
           {index: 2, oldValue: obj3 }
         ]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to identify if an object is deleted causing others to move', function() {
@@ -152,7 +152,7 @@ describe('repeat', function() {
         expect(changes.moves).toEqual([
           {value: obj3, oldIndex: 2, newIndex: 1}
         ]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to cope with multiple copies of the same object', function() {
@@ -162,7 +162,7 @@ describe('repeat', function() {
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to cope with addition when there are multiple copies', function() {
@@ -176,7 +176,7 @@ describe('repeat', function() {
           { index: 1, oldValue: obj1 }
         ]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
 
       it('should be able to cope with changing when there are multiple copies', function() {
@@ -188,12 +188,12 @@ describe('repeat', function() {
           { index: 2, oldValue: obj1 }
         ]);
         expect(changes.moves).toEqual([]);
-        expect(changes.modified).toEqual([]);
+        expect(changes.modifications).toEqual([]);
       });
     });
   });
 
-  describe('my-repeater directive', function() {
+  xdescribe('my-repeater directive', function() {
     var element;
 
 
@@ -202,7 +202,7 @@ describe('repeat', function() {
     });
 
 
-    iit('should ngRepeat over array', inject(function($rootScope, $compile) {
+    it('should ngRepeat over array', inject(function($rootScope, $compile) {
       element = $compile(
         '<ul>' +
           '<li my-repeat="item in items" ng-init="suffix = \';\'" ng-bind="item + suffix"></li>' +

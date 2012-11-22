@@ -6,7 +6,7 @@ angular.module('repeat').factory('whatChanged', function() {
       additions: [],
       deletions: [],
       moves: [],
-      modified: []
+      modifications: []
     };
     var objHash = [];
     function getEntry(obj) {
@@ -30,8 +30,8 @@ angular.module('repeat').factory('whatChanged', function() {
     function pushAddition(index) {
       changes.additions.push({ index: index, newValue: changed[index]});
     }
-    function pushModification(index) {
-      changes.modified.push( { index: index, oldValue: original[index], newValue: changed[index]});
+    function pushModifications(index) {
+      changes.modifications.push( { index: index, oldValue: original[index], newValue: changed[index]});
     }
     function pushMove(oldIndex, newIndex) {
       changes.moves.push( { oldIndex: oldIndex, newIndex: newIndex, value: original[oldIndex]});
@@ -44,8 +44,8 @@ angular.module('repeat').factory('whatChanged', function() {
         if ( !angular.isObject(original[index]) ) {
           // Original item is not an object
           if ( !angular.isObject(changed[index]) ) {
-            // Neither is Changed item - so we add a modified item
-            pushModification(index);
+            // Neither is Changed item - so we add a modifications at this index
+            pushModifications(index);
           } else {
             // Changed item is an object - so add a deletion for the original primitive...
             pushDeletion(index);
