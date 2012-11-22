@@ -15,49 +15,52 @@ angular.module('repeat')
       var sourceExpression = match[2];
 
       // Return the linking function for this directive
-      return function(scope, startElement, attr){
+      return function(scope, templateElement, attr){
         var originalCollection = [];
         var originalChildItems = [];
-        var containerElement = startElement.parent();
-
+        var containerElement = templateElement.parent();
 
         scope.$watch(function myRepeatWatch(scope){
           var index, item;
           var newCollection = scope.$eval(sourceExpression);
 
           // Make a copy of the child items that will be updated
-          var newChildItems = originalChildItems.slice(0);
+          var newChildItems = [];
+          for(index=0; index<originalChildItems.length; index++) {
+            newChildItems[index] = originalChildItems[index];
+          }
 
           var temp = whatChanged(originalCollection, newCollection);
           var changes = flattenChanges(temp);
 
+
           // Iterate of the flattened changes array - updating the childscopes accordingly
-          var lastChildScope, newChildScope, lastIndex;
+          var lastChildScope, newChildScope;
           for(index = 0; index < changes.length; index++) {
             item = changes[index];
             if ( angular.isDefined(item)) {
-              if ( item.deleted ) {
-                var originalChildItem = originalChildItems[index];
-                originalChildItem.scope.$destroy();
-                originalChildItem.element.remove();
-                delete newChildItems[item.index];
-              }
               if ( item.added ) {
                 var newChildItem = newChildItems[index] = { scope: scope.$new() };
                 newChildScope = newChildItem.scope;
                 newChildScope[valueIdentity] = item.value;
 
                 linker(newChildItem.scope, function(newChildElement){
-                  angular.element(containerElement.children()[index]).after(newChildElement);
+                  if ( index > 0 ) {
+                    angular.element(containerElement.children()[index-1]).after(newChildElement);
+                  } else {
+                    containerElement.prepend(newChildElement);
+                  }
                   newChildItem.element = newChildElement;
                 });
-              }
-              if ( item.modified ) {
+              } else if ( item.deleted ) {
+                var originalChildItem = originalChildItems[index];
+                originalChildItem.scope.$destroy();
+                originalChildItem.element.remove();
+                newChildItems[item.index] = undefined;
+              } else if ( item.modified ) {
                 newChildItems[index].scope[valueIdentity] = item.newValue;
-              }
-              if ( item.moved ) {
+              } else if ( item.moved ) {
                 newChildItems[item.index] = originalChildItems[item.oldIndex];
-                angular.element(containerElement.children()[item.index]).after(newChildItems[item.index].element);
               }
             }
           }
@@ -70,17 +73,16 @@ angular.module('repeat')
               newChildScope.$middle = (index !== 0);
               newChildScope.$last = false;
               lastChildScope = newChildScope;
-              lastIndex = index;
             }
           }
-
           // Fix up last item
           if ( angular.isDefined(lastChildScope) ) {
             lastChildScope.$last = true;
             lastChildScope.$middle = false;
           }
+
           // Store originals for next time
-          originalCollection = newCollection.slice(0, lastIndex+1);
+          originalCollection = newCollection;
           originalChildItems = newChildItems;
         });
 

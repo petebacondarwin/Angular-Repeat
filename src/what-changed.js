@@ -199,7 +199,7 @@ angular.module('repeat')
       item.index = changes.additions[index].index;
     }
     for(index = 0; index < changes.moves.length; index++) {
-      item = get(flattened,changes.moves[index].oldIndex);
+      item = get(flattened,changes.moves[index].newIndex);
       item.moved = true;
       item.index = changes.moves[index].newIndex;
       item.oldIndex = changes.moves[index].oldIndex;

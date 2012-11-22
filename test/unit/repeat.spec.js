@@ -252,14 +252,13 @@ describe('repeat', function() {
       flattened = flattenChanges(changes);
       expect(flattened.length).toBe(5);
       expect(flattened[0]).toBeUndefined();
-      expect(flattened[1]).toBeUndefined();
+      expect(flattened[1].moved).toBe(true);
+      expect(flattened[1].value).toEqual({});
+      expect(flattened[1].oldIndex).toBe(3);
+      expect(flattened[1].index).toBe(1);
       expect(flattened[2].added).toBe(true);
       expect(flattened[2].value).toBe('someVal');
       expect(flattened[2].deleted).toBe(true);
-      expect(flattened[3].moved).toBe(true);
-      expect(flattened[3].value).toEqual({});
-      expect(flattened[3].oldIndex).toBe(3);
-      expect(flattened[3].index).toBe(1);
       expect(flattened[4].modified).toBe(true);
       expect(flattened[4].oldValue).toBe('something');
       expect(flattened[4].newValue).toBe(23);
@@ -515,12 +514,12 @@ describe('repeat', function() {
       beforeEach(inject(function($rootScope, $compile) {
         element = $compile(
           '<ul>' +
-            '<li my-repeat="item in items">{{key}}:{{val}}|></li>' +
+            '<li my-repeat="item in items">{{$index}}:{{item.name}}</li>' +
           '</ul>')($rootScope);
-        a = {};
-        b = {};
-        c = {};
-        d = {};
+        a = {name:'a'};
+        b = {name:'b'};
+        c = {name:'c'};
+        d = {name:'d'};
 
         $rootScope.items = [a, b, c];
         $rootScope.$digest();
