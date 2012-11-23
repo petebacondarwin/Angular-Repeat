@@ -3,6 +3,29 @@ angular.module('repeat')
 .factory('whatChanged', function() {
   var uid = ['0', '0', '0'];
 
+  function EntryHash(original, changed) {
+    this.original = original;
+    this.changed = changed;
+    this.entries = [];
+  }
+  EntryHash.prototype = {
+    getEntry: function (obj) {
+      var key = hashKey(obj);
+      var entry = this.entries[key];
+      if ( !angular.isDefined(entry) ) {
+        entry = ({ newIndexes: [], oldIndexes: [], obj: obj });
+      }
+      this.entries[key] = entry;
+      return entry;
+    },
+    addNewEntry: function(index) {
+      this.getEntry(this.changed[index]).newIndexes.push(index);
+    },
+    addOldEntry: function(index) {
+      this.getEntry(this.original[index]).oldIndexes.push(index);
+    }
+  };
+
   return function(original, changed) {
     var changes = {
       additions: [],
@@ -10,22 +33,8 @@ angular.module('repeat')
       moves: [],
       modifications: []
     };
-    var objHash = [];
-    function getEntry(obj) {
-      var key = hashKey(obj);
-      var entry = objHash[key];
-      if ( !angular.isDefined(entry) ) {
-        entry = ({ newIndexes: [], oldIndexes: [], obj: obj });
-      }
-      objHash[key] = entry;
-      return entry;
-    }
-    function storeNewObj(index) {
-      getEntry(changed[index]).newIndexes.push(index);
-    }
-    function storeOldObj(index) {
-      getEntry(original[index]).oldIndexes.push(index);
-    }
+    var objHash = new EntryHash(original, changed);
+
     function pushDeletion(index) {
       changes.deletions.push({ index: index, oldValue: original[index]});
     }
@@ -39,59 +48,63 @@ angular.module('repeat')
       changes.moves.push( { oldIndex: oldIndex, newIndex: newIndex, value: original[oldIndex]});
     }
 
-    var index = 0;
+    var index = 0, changedItem, originalItem;
     while(index < original.length && index < changed.length) {
-      if ( original[index] !== changed[index] ) {
-        // Something has changesd...
-        if ( !angular.isObject(original[index]) ) {
+      changedItem = changed[index];
+      originalItem = original[index];
+      if ( originalItem !== changedItem ) {
+        // Something has changed...
+        if ( !angular.isObject(originalItem) ) {
           // Original item is not an object
-          if ( !angular.isObject(changed[index]) ) {
+          if ( !angular.isObject(changedItem) ) {
             // Neither is Changed item - so we add a modifications at this index
             pushModifications(index);
           } else {
             // Changed item is an object - so add a deletion for the original primitive...
             pushDeletion(index);
             // ...and store the new object index for later
-            storeNewObj(index);
+            objHash.addNewEntry(index);
           }
         } else {
           // Original item is an object
-          if ( !angular.isObject(changed[index]) ) {
+          if ( !angular.isObject(changedItem) ) {
             // Changed item is not an object - so add an addition for the new primitive...
             pushAddition(index);
             // ...and store the old object index for later
-            storeOldObj(index);
+            objHash.addOldEntry(index);
           } else {
             // Both Original and Changed items are objects - so store both items for later
-            storeOldObj(index);
-            storeNewObj(index);
+            objHash.addOldEntry(index);
+            objHash.addNewEntry(index);
           }
         }
       }
       index++;
     }
+
     while ( index < changed.length ) {
       if ( !angular.isObject(changed[index]) ) {
-        changes.additions.push( { index: index, newValue: changed[index]});
+        pushAddition(index);
       } else {
-        storeNewObj(index);
+        objHash.addNewEntry(index);
       }
       index++;
     }
     while ( index < original.length ) {
-      if ( !angular.isObject(original[index]) ) {
-        changes.deletions.push( { index: index, oldValue: original[index]});
+      if ( !angular.isObject(originalItem) ) {
+        pushDeletion(index);
       } else {
-        storeOldObj(index);
+        objHash.addOldEntry(index);
       }
       index++;
     }
 
-    for(var key in objHash) {
-      if ( !objHash.hasOwnProperty(key) ) {
+    var entries = objHash.entries;
+    for(var key in entries) {
+      if ( !entries.hasOwnProperty(key) ) {
         continue;
       }
-      var entry = objHash[key];
+      var entry = entries[key];
       index = 0;
       while(index < entry.oldIndexes.length && index < entry.newIndexes.length) {
         pushMove(entry.oldIndexes[index], entry.newIndexes[index]);
