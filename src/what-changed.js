@@ -33,7 +33,7 @@ angular.module('repeat')
   function Changes(original, changed) {
     this.original = original;
     this.changed = changed;
-    // All additions in the form {index, newValue}
+    // All additions in the form {index, value}
     this.additions = [];
     // All deletions in the form {index, oldValue}
     this.deletions = [];
@@ -45,7 +45,7 @@ angular.module('repeat')
   Changes.prototype = {
     // An addition was found at the given index
     pushAddition: function(index) {
-      this.additions.push({ index: index, newValue: this.changed[index]});
+      this.additions.push({ index: index, value: this.changed[index]});
     },
     // A deletion was found at the given index
     pushDeletion: function(index) {
@@ -226,23 +226,18 @@ angular.module('repeat')
     added: function(item){
       if ( angular.isDefined(this.changes[item.index]) ) {
         this.changes[item.index].added = true;
-        this.changes[item.index].value = item.newValue;
+        this.changes[item.index].value = item.value;
       } else {
-        this.changes[item.index] = {
-          added: true,
-          index: item.index,
-          value: item.newValue
-        };
+        item.added = true;
+        this.changes[item.index] = item;
       }
     },
     deleted: function(item) {
       if ( angular.isDefined(this.changes[item.index]) ) {
         this.changes[item.index].deleted = true;
       } else {
-        this.changes[item.index] = {
-          deleted: true,
-          index: item.index
-        };
+        item.deleted = true;
+        this.changes[item.index] = item;
       }
     }
   };

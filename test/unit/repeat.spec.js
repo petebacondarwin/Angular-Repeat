@@ -42,8 +42,8 @@ describe('repeat', function() {
         var changed = [0,1,2,3,4,5,6];
         var changes = whatChanged(original, changed);
         expect(changes.additions).toEqual([
-          { index: 5, newValue: 5 },
-          { index: 6, newValue: 6 }
+          { index: 5, value: 5 },
+          { index: 6, value: 6 }
         ]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
@@ -66,8 +66,8 @@ describe('repeat', function() {
         var changed = [0,7,8,3,4,5,6];
         var changes = whatChanged(original, changed);
         expect(changes.additions).toEqual([
-          { index: 5, newValue: 5 },
-          { index: 6, newValue: 6 }
+          { index: 5, value: 5 },
+          { index: 6, value: 6 }
         ]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
@@ -129,7 +129,7 @@ describe('repeat', function() {
         var changed = [obj1, obj2, obj3, obj4];
         var changes = whatChanged(original, changed);
         expect(changes.additions).toEqual([
-          {index: 3, newValue: obj4 }
+          {index: 3, value: obj4 }
         ]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
@@ -175,7 +175,7 @@ describe('repeat', function() {
         var changed = [obj1, obj2, obj1];
         var changes = whatChanged(original, changed);
         expect(changes.additions).toEqual([
-          { index: 1, newValue: obj2 }
+          { index: 1, value: obj2 }
         ]);
         expect(changes.deletions).toEqual([
           { index: 1, oldValue: obj1 }
@@ -219,7 +219,7 @@ describe('repeat', function() {
       flattened = flattenChanges(changes);
       expect(flattened.length).toBe(0);
 
-      changes.additions.push({ index: 2, newValue: 'someVal'});
+      changes.additions.push({ index: 2, value: 'someVal'});
       flattened = flattenChanges(changes);
       expect(flattened.length).toBe(3);
       expect(flattened[0]).toBeUndefined();
@@ -276,7 +276,7 @@ describe('repeat', function() {
       flattened = flattenChanges(changes);
       expect(flattened.length).toBe(0);
 
-      changes.additions.push({ index: 2, newValue: 'someVal'});
+      changes.additions.push({ index: 2, value: 'someVal'});
       flattened = flattenChanges(changes);
       expect(flattened.length).toBe(3);
 
