@@ -118,8 +118,8 @@ describe('repeat', function() {
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([
-          { value: obj2, oldIndex: 1, newIndex: 2 },
-          { value: obj3, oldIndex: 2, newIndex: 1 }
+          { value: obj2, oldIndex: 1, index: 2 },
+          { value: obj3, oldIndex: 2, index: 1 }
         ]);
         expect(changes.modifications).toEqual([]);
       });
@@ -155,7 +155,7 @@ describe('repeat', function() {
           {index: 1, oldValue: obj2 }
         ]);
         expect(changes.moves).toEqual([
-          {value: obj3, oldIndex: 2, newIndex: 1}
+          {value: obj3, oldIndex: 2, index: 1}
         ]);
         expect(changes.modifications).toEqual([]);
       });
@@ -248,7 +248,7 @@ describe('repeat', function() {
       expect(flattened[4].oldValue).toBe('something');
       expect(flattened[4].newValue).toBe(23);
 
-      changes.moves.push({ oldIndex: 3, newIndex: 1, value: {} });
+      changes.moves.push({ oldIndex: 3, index: 1, value: {} });
       flattened = flattenChanges(changes);
       expect(flattened.length).toBe(5);
       expect(flattened[0]).toBeUndefined();

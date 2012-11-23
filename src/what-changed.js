@@ -39,7 +39,7 @@ angular.module('repeat')
     this.deletions = [];
     // All primitive value modifications in the form { index, }
     this.modifications = [];
-    // All moved objects in the form {newIndex, oldIndex, value}
+    // All moved objects in the form {index, oldIndex, value}
     this.moves = [];
   }
   Changes.prototype = {
@@ -57,7 +57,7 @@ angular.module('repeat')
     },
     // An object has moved from oldIndex to newIndex
     pushMove: function(oldIndex, newIndex) {
-      this.moves.push( { oldIndex: oldIndex, newIndex: newIndex, value: this.original[oldIndex]});
+      this.moves.push( { oldIndex: oldIndex, index: newIndex, value: this.original[oldIndex]});
     }
   };
 
@@ -216,12 +216,8 @@ angular.module('repeat')
       this.changes[item.index] = item;
     },
     moved: function(item) {
-      this.changes[item.newIndex] = {
-        moved: true,
-        index: item.newIndex,
-        oldIndex: item.oldIndex,
-        value: item.value
-      };
+      item.moved = true;
+      this.changes[item.index] = item;
     },
     added: function(item){
       if ( angular.isDefined(this.changes[item.index]) ) {
