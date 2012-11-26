@@ -14,6 +14,12 @@ angular.module('repeat')
       var valueIdentity = match[1];
       var sourceExpression = match[2];
 
+      match = valueIdentity.match(/^(?:([\$\w]+))$/);
+      if (!match) {
+        throw Error("'item' in 'item in collection' should be identifier or (key, value) but got '" +
+            valueIdentity + "'.");
+      }
+
       // Return the linking function for this directive
       return function(scope, startElement, attr){
         var originalCollection = [];
@@ -30,7 +36,6 @@ angular.module('repeat')
 
           var temp = whatChanged(originalCollection, newCollection);
           var changes = flattenChanges(temp);
-
 
           // Iterate of the flattened changes array - updating the childscopes and elements accordingly
           var lastChildScope, newChildScope, lastIndex, newChildItem;
