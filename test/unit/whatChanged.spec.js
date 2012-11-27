@@ -5,12 +5,14 @@ describe('repeat', function() {
   beforeEach(module('test'));
   beforeEach(module('repeat'));
 
-  describe('whatChanged', function() {
+  describe('whatChanged - arrays', function() {
     var whatChanged;
+    var wrapArray;
 
     beforeEach(function () {
-      inject(function(_whatChanged_) {
+      inject(function(_whatChanged_, _wrapArray_) {
         whatChanged = _whatChanged_;
+        wrapArray = _wrapArray_;
       });
     });
 
@@ -18,7 +20,7 @@ describe('repeat', function() {
       var original = [0,1,2,3,4];
       it('should have nothing changed if primitive items are the same', function() {
         var changed = [0,1,2,3,4];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
@@ -27,7 +29,7 @@ describe('repeat', function() {
 
       it('should be able to identify indexes of primitives that have changed', function() {
         var changed = [0,1,3,4,2];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
@@ -40,7 +42,7 @@ describe('repeat', function() {
 
       it('should be able to identify added primitives', function() {
         var changed = [0,1,2,3,4,5,6];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([
           { index: 5, value: 5 },
           { index: 6, value: 6 }
@@ -52,7 +54,7 @@ describe('repeat', function() {
 
       it('should be able to identify removed primitives', function() {
         var changed = [0,1,2];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([
           { index: 3, oldValue: 3 },
@@ -64,7 +66,7 @@ describe('repeat', function() {
 
       it('should be able to identify modifications and additions', function () {
         var changed = [0,7,8,3,4,5,6];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([
           { index: 5, value: 5 },
           { index: 6, value: 6 }
@@ -79,7 +81,7 @@ describe('repeat', function() {
 
       it('should be able to identify modifications and deletions', function () {
         var changed = [0,7,8];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([
           { index: 3, oldValue: 3 },
@@ -105,7 +107,7 @@ describe('repeat', function() {
 
       it('should have nothing changed if the objects are identical', function() {
         var changed = [obj1, obj2, obj3];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
@@ -114,7 +116,7 @@ describe('repeat', function() {
 
       it('should be able to identify if an object moves', function() {
         var changed = [obj1, obj3, obj2];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([
@@ -127,7 +129,7 @@ describe('repeat', function() {
       it('should be able to identify if a new object is added', function() {
         var obj4 = {};
         var changed = [obj1, obj2, obj3, obj4];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([
           {index: 3, value: obj4 }
         ]);
@@ -138,7 +140,7 @@ describe('repeat', function() {
 
       it('should be able to identify if an object is deleted from the end', function() {
         var changed = [obj1, obj2];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([
           {index: 2, oldValue: obj3 }
@@ -149,7 +151,7 @@ describe('repeat', function() {
 
       it('should be able to identify if an object is deleted from the front', function() {
         var changed = [obj2, obj3];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([
           {index: 0, oldValue: obj1 }
@@ -163,7 +165,7 @@ describe('repeat', function() {
 
       it('should be able to identify if an object is deleted causing others to move', function() {
         var changed = [obj1, obj3];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([
           {index: 1, oldValue: obj2 }
@@ -177,7 +179,7 @@ describe('repeat', function() {
       it('should be able to cope with multiple copies of the same object', function() {
         original = [obj1, obj1, obj1];
         var changed = [obj1, obj1, obj1];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([]);
         expect(changes.moves).toEqual([]);
@@ -187,7 +189,7 @@ describe('repeat', function() {
       it('should be able to cope with addition when there are multiple copies', function() {
         original = [obj1, obj1, obj1];
         var changed = [obj1, obj2, obj1];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([
           { index: 1, value: obj2 }
         ]);
@@ -201,7 +203,7 @@ describe('repeat', function() {
       it('should be able to cope with changing when there are multiple copies', function() {
         original = [obj1, obj1, obj1];
         var changed = [obj1, obj1];
-        var changes = whatChanged(original, changed);
+        var changes = whatChanged(wrapArray(original), wrapArray(changed));
         expect(changes.additions).toEqual([]);
         expect(changes.deletions).toEqual([
           { index: 2, oldValue: obj1 }

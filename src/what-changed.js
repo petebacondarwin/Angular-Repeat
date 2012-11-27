@@ -21,11 +21,11 @@ angular.module('repeat')
     },
     // An object is now at this index where it wasn't before
     addNewEntry: function(index) {
-      this.getEntry(this.changed[index]).newIndexes.push(index);
+      this.getEntry(this.changed.get(index)).newIndexes.push(index);
     },
     // An object is no longer at this index
     addOldEntry: function(index) {
-      this.getEntry(this.original[index]).oldIndexes.push(index);
+      this.getEntry(this.original.get(index)).oldIndexes.push(index);
     }
   };
 
@@ -45,19 +45,19 @@ angular.module('repeat')
   Changes.prototype = {
     // An addition was found at the given index
     pushAddition: function(index) {
-      this.additions.push({ index: index, value: this.changed[index]});
+      this.additions.push({ index: index, value: this.changed.get(index)});
     },
     // A deletion was found at the given index
     pushDeletion: function(index) {
-      this.deletions.push({ index: index, oldValue: this.original[index]});
+      this.deletions.push({ index: index, oldValue: this.original.get(index)});
     },
     // A modification to a primitive value was found at the given index
     pushModifications: function(index) {
-      this.modifications.push( { index: index, oldValue: this.original[index], newValue: this.changed[index]});
+      this.modifications.push( { index: index, oldValue: this.original.get(index), newValue: this.changed.get(index)});
     },
     // An object has moved from oldIndex to newIndex
     pushMove: function(oldIndex, newIndex) {
-      this.moves.push( { oldIndex: oldIndex, index: newIndex, value: this.original[oldIndex]});
+      this.moves.push( { oldIndex: oldIndex, index: newIndex, value: this.original.get(oldIndex)});
     }
   };
 
@@ -66,9 +66,9 @@ angular.module('repeat')
     var changes = new Changes(original, changed);
 
     var index = 0, changedItem, originalItem;
-    while(index < original.length && index < changed.length) {
-      changedItem = changed[index];
-      originalItem = original[index];
+    while(index < original.length() && index < changed.length()) {
+      changedItem = changed.get(index);
+      originalItem = original.get(index);
       if ( originalItem !== changedItem ) {
         // Something has changed...
         if ( !angular.isObject(originalItem) ) {
@@ -99,15 +99,15 @@ angular.module('repeat')
       index++;
     }
 
-    while ( index < changed.length ) {
-      if ( !angular.isObject(changed[index]) ) {
+    while ( index < changed.length() ) {
+      if ( !angular.isObject(changed.get(index)) ) {
         changes.pushAddition(index);
       } else {
         objTracker.addNewEntry(index);
       }
       index++;
     }
-    while ( index < original.length ) {
+    while ( index < original.length() ) {
       if ( !angular.isObject(originalItem) ) {
         changes.pushDeletion(index);
       } else {
