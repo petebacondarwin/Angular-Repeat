@@ -128,7 +128,7 @@ describe('myRepeat', function() {
   });
 
 
-  xit('should iterate over on object/map', function() {
+  it('should iterate over on object/map', function() {
     element = $compile(
       '<ul>' +
         '<li my-repeat="(key, value) in items">{{key}}:{{value}}|</li>' +
@@ -183,7 +183,7 @@ describe('myRepeat', function() {
   });
 
 
-  xit('should not myRepeat over parent properties', function() {
+  it('should not myRepeat over parent properties', function() {
     var Class = function() {};
     Class.prototype.abc = function() {};
     Class.prototype.value = 'abc';
@@ -228,7 +228,7 @@ describe('myRepeat', function() {
   });
 
 
-  xit('should expose iterator offset as $index when iterating over objects', function() {
+  it('should expose iterator offset as $index when iterating over objects', function() {
     element = $compile(
       '<ul>' +
         '<li my-repeat="(key, val) in items">{{key}}:{{val}}:{{$index}}|</li>' +
@@ -269,7 +269,7 @@ describe('myRepeat', function() {
   });
 
 
-  xit('should expose iterator position as $first, $middle and $last when iterating over objects',
+  it('should expose iterator position as $first, $middle and $last when iterating over objects',
       function() {
     element = $compile(
       '<ul>' +

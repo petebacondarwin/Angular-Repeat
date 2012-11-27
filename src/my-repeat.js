@@ -1,6 +1,6 @@
 angular.module('repeat')
 
-.directive('myRepeat', ['whatChanged', 'flattenChanges', function(whatChanged, flattenChanges) {
+.directive('myRepeat', ['whatChanged', 'flattenChanges', 'wrapArray', 'wrapObject', function(whatChanged, flattenChanges, wrapArray, wrapObject) {
   return {
     transclude: 'element',
     priority: 1000,
@@ -11,33 +11,39 @@ angular.module('repeat')
       if (!match) {
         throw Error("Expected myRepeat in form of '_item_ in _collection_' but got '" + expression + "'.");
       }
-      var valueIdentity = match[1];
+      var identifiers = match[1];
       var sourceExpression = match[2];
 
-      match = valueIdentity.match(/^(?:([\$\w]+))$/);
+      match = identifiers.match(/^(?:([\$\w]+)|\(([\$\w]+)\s*,\s*([\$\w]+)\))$/);
       if (!match) {
         throw Error("'item' in 'item in collection' should be identifier or (key, value) but got '" +
-            valueIdentity + "'.");
+            identifiers + "'.");
       }
+      var valueIdentifier = match[3] || match[1];
+      var keyIdentifier = match[2];
+      var wrapFn = keyIdentifier ? wrapObject : wrapArray;
+
+      var updateScope = function(scope, value, key) {
+        scope[valueIdentifier] = value;
+        if (keyIdentifier) {
+          scope[keyIdentifier] = key;
+        }
+      };
 
       // Return the linking function for this directive
       return function(scope, startElement, attr){
-        var originalCollection = [];
+        var originalCollection = wrapFn([]);
         var originalChildItems = [];
         var containerElement = startElement.parent();
 
-
         scope.$watch(function myRepeatWatch(scope){
-          var item;
-          var newCollection = scope.$eval(sourceExpression);
-
-          // Make a copy of the child items that will be updated
+          var item, key;
+          var newCollection = wrapFn(scope.$eval(sourceExpression));
           var newChildItems = [];
-
           var temp = whatChanged(originalCollection, newCollection);
           var changes = flattenChanges(temp);
 
-          // Iterate of the flattened changes array - updating the childscopes and elements accordingly
+          // Iterate over the flattened changes array - updating the childscopes and elements accordingly
           var lastChildScope, newChildScope, newChildItem;
           var currentElement = startElement;
           var itemIndex = 0, changeIndex = 0;
@@ -53,19 +59,19 @@ angular.module('repeat')
               continue;
             }
             if ( item.deleted ) {
-              // This item was deleted - destroy the scope and remove the element
+              // An item has been deleted here - destroy the old scope and remove the old element
               var originalChildItem = originalChildItems[itemIndex];
               originalChildItem.scope.$destroy();
               originalChildItem.element.remove();
+              // If an item is added or moved here as well then the index will incremented in the added or moved if statement below
               if ( !item.added && !item.moved ) {
-                // If an item had been added or moved here as well the the index will be moved forward there
                 itemIndex++;
               }
             }
             if ( item.added ) {
-              // This item has been added - create a new scope and clone a new element
+              // An item has been added here - create a new scope and clone a new element
               newChildItem = { scope: scope.$new() };
-              newChildItem.scope[valueIdentity] = item.value;
+              updateScope(newChildItem.scope, item.value, newCollection.key(item.index));
               clone(newChildItem.scope, function(newChildElement){
                 currentElement.after(newChildElement);
                 currentElement = newChildItem.element = newChildElement;
@@ -76,18 +82,18 @@ angular.module('repeat')
             if ( item.modified ) {
               // This item is a primitive that has been modified - update the scope
               newChildItem = originalChildItems[itemIndex];
-              newChildItem.scope[valueIdentity] = item.newValue;
+              updateScope(newChildItem.scope, item.newValue, newCollection.key(item.index));
               newChildItems.push(newChildItem);
-              itemIndex++;
               currentElement = newChildItem.element;
+              itemIndex++;
             }
             if ( item.moved ) {
-              // This item is an object that has moved from somewhere else - move the element
+              // An object has moved here from somewhere else - move the element accordingly
               newChildItem = originalChildItems[item.oldIndex];
               newChildItems.push(newChildItem);
-              itemIndex++;
               currentElement.after(newChildItem.element);
               currentElement = newChildItem.element;
+              itemIndex++;
             }
             changeIndex++;
           }
@@ -117,7 +123,7 @@ angular.module('repeat')
           }
 
           // Store originals for next time
-          originalCollection = newCollection.slice(0);
+          originalCollection = newCollection.copy();
           originalChildItems = newChildItems.slice(0);
         });
 
