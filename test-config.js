@@ -5,8 +5,9 @@ files = [
   'test/lib/angular/angular.js',
   'test/lib/angular/angular-mocks.js',
   'src/module.js',
+  'src/wrapper.js',
   'src/what-changed.js',
-  'src//my-repeat.js',
+  'src/my-repeat.js',
   'test/unit/**/*.spec.js'
 ];
 
