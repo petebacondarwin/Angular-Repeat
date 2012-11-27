@@ -38,7 +38,7 @@ angular.module('repeat')
           var changes = flattenChanges(temp);
 
           // Iterate of the flattened changes array - updating the childscopes and elements accordingly
-          var lastChildScope, newChildScope, lastIndex, newChildItem;
+          var lastChildScope, newChildScope, newChildItem;
           var currentElement = startElement;
           var itemIndex = 0, changeIndex = 0;
           while(changeIndex < changes.length) {
@@ -57,8 +57,8 @@ angular.module('repeat')
               var originalChildItem = originalChildItems[itemIndex];
               originalChildItem.scope.$destroy();
               originalChildItem.element.remove();
-              if ( !item.added ) {
-                // If an item had been added as well the the index will be moved forward there
+              if ( !item.added && !item.moved ) {
+                // If an item had been added or moved here as well the the index will be moved forward there
                 itemIndex++;
               }
             }
@@ -108,7 +108,6 @@ angular.module('repeat')
               newChildScope.$middle = (index !== 0);
               newChildScope.$last = false;
               lastChildScope = newChildScope;
-              lastIndex = index;
             }
           }
           // Fix up last item

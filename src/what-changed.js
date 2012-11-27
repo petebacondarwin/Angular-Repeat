@@ -207,34 +207,38 @@ angular.module('repeat')
     this.changes = [];
   }
   FlattenedChanges.prototype = {
-    get: function(index) {
-      this.changes[index] = angular.isDefined(this.changes[index]) ? this.changes[index] : {};
-      return this.changes[index];
-    },
     modified: function(item) {
       item.modified = true;
       this.changes[item.index] = item;
     },
-    moved: function(item) {
+    moved: function(change) {
+      var item = this.changes[change.index];
+      if ( angular.isDefined(item) ) {
+        item.value = change.value;
+        item.oldIndex = change.oldIndex;
+      } else {
+        item = change;
+      }
       item.moved = true;
-      this.changes[item.index] = item;
+      this.changes[change.index] = item;
     },
-    added: function(item){
-      if ( angular.isDefined(this.changes[item.index]) ) {
-        this.changes[item.index].added = true;
-        this.changes[item.index].value = item.value;
+    added: function(change){
+      var item = this.changes[change.index];
+      if ( angular.isDefined(item) ) {
+        item.value = change.value;
       } else {
-        item.added = true;
-        this.changes[item.index] = item;
+        item = change;
       }
+      item.added = true;
+      this.changes[change.index] = item;
     },
-    deleted: function(item) {
-      if ( angular.isDefined(this.changes[item.index]) ) {
-        this.changes[item.index].deleted = true;
-      } else {
-        item.deleted = true;
-        this.changes[item.index] = item;
+    deleted: function(change) {
+      var item = this.changes[change.index];
+      if ( !angular.isDefined(item) ) {
+        item = change;
       }
+      item.deleted = true;
+      this.changes[change.index] = item;
     }
   };
 

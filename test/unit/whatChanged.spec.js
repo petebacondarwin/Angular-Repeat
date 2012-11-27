@@ -278,6 +278,26 @@ describe('repeat', function() {
       expect(flattened[4].newValue).toBe(23);
     });
 
+    it('should be able to identify if an object is deleted from the front', function() {
+      var obj1 = {}, obj2 = {}, obj3 = {};
+      var changes = {
+        additions:[],
+        deletions: [
+          {index: 0, oldValue: obj1 }
+        ],
+        moves: [
+          { value: obj2, oldIndex: 1, index: 0 },
+          { value: obj3, oldIndex: 2, index: 1 }
+        ],
+        modifications: []
+      };
+      flattened = flattenChanges(changes);
+      expect(flattened.length).toBe(2);
+      expect(flattened[0].deleted).toBe(true);
+      expect(flattened[0].moved).toBe(true);
+      expect(flattened[1].moved).toBe(true);
+    });
+
     it('should not be affected by previous calls', function() {
       var flattened;
       var changes = {
